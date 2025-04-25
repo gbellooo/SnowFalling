@@ -86,6 +86,52 @@ class Background:
         surface.blit(self.image, (0, self.y1))
         surface.blit(self.image, (0, self.y2))
 
+class Tree(pygame.sprite.Sprite):
+    def __init__(self):
+        super(Tree, self).__init__()
+
+class Menu():
+    fonte = pygame.font.SysFont("Arial", 40)
+
+    def desenhar_menu(texto, y, selecionado = False):
+        cor = (100, 100, 100)
+        ret = pygame.Rect(LARGURA // 2 - 100, y, 200, 50)
+
+        pygame.draw.rect(tela, cor, ret)
+
+        texto_render = Menu.fonte.render(texto, True, (0, 0, 0)) 
+        tela.blit(texto_render, (ret.x + 20, ret.y + 5))
+
+        return ret
+    
+    def menu_pause():
+        pausado = True
+
+        while pausado:
+            tela.fill((255, 255, 255))
+
+            botao_inicio = Menu.desenhar_menu("Início", 200)
+            botao_recomecar = Menu.desenhar_menu("Recomeçar", 280)
+            botao_sair = Menu.desenhar_menu("Sair", 360)
+
+            pygame.display.flip()
+
+            for evento in pygame.event.get():
+                if evento.type == pygame.QUIT:
+                    return "sair"
+
+                if evento.type == pygame.MOUSEBUTTONDOWN:
+                    if botao_inicio.collidepoint(evento.pos):
+                        print("Voltando ao menu principal futuramente...")
+                        return "inicio"
+                    
+                    elif botao_recomecar.collidepoint(evento.pos):
+                        print("Reiniciando fase...")
+                        return "recomecar"
+                    
+                    elif botao_sair.collidepoint(evento.pos):
+                        return "sair"
+
 def main():
     rodando = True
     clock = pygame.time.Clock()
@@ -98,11 +144,22 @@ def main():
     grupo.add(player)
     
     while rodando:
-        #clock.tick(60)  # Controla os frames por segundo
-
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 rodando = False
+
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_ESCAPE:
+                    acao = Menu.menu_pause()
+
+                    if acao == "recomecar":
+                        return main()
+                    
+                    elif acao == "inicio":
+                        rodando = False
+
+                    elif acao == "sair":
+                        rodando = False
 
         # Lógica do jogo aqui (movimentos, colisões, etc.)
         background.update()
