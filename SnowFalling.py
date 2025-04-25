@@ -1,4 +1,5 @@
 import pygame
+import random
 
 from pygame.locals import*
 
@@ -17,11 +18,16 @@ class Player(pygame.sprite.Sprite):
         super(Player, self).__init__()
         self.name = name
         self.alive =  True
-        self.position = pygame.math.Vector2(LARGURA // 2, ALTURA - 100)
+        self.position = pygame.math.Vector2(LARGURA // 2, ALTURA - 200)
         self.speed = 5
         
-        self.image = pygame.image.load("vovo.png")
-        self.image = pygame.transform.scale(self.image, (120, 120))
+        self.deslizamento_x = 0
+        self.deslizamento_max = 5
+        self.aceleracao = 3
+        self.friccao = 0.99
+        
+        self.image = pygame.image.load("vovo1.png")
+        self.image = pygame.transform.scale(self.image, (100, 100))
         
         self.rect = self.image.get_rect()
         self.rect.center = self.position
@@ -30,22 +36,38 @@ class Player(pygame.sprite.Sprite):
         Keys = pygame.key.get_pressed()
         
         if Keys [K_LEFT]:
+            self.deslizamento_x -= self.aceleracao * 60
             self.position.x -= self.speed
         
-        if Keys [K_RIGHT]:
+        elif Keys [K_RIGHT]:
+            self.deslizamento_x += self.aceleracao * 60
             self.position.x += self.speed
             
+        else:
+            self.deslizamento_x *= self.friccao
+            
+        # Limite o deslizamento    
+        if self.deslizamento_x > self.deslizamento_max:
+            self.deslizamento_x = self.deslizamento_max
+            
+        elif self.deslizamento_x < -self.deslizamento_max:
+            self.deslizamento_x = -self.deslizamento_max
+            
+        self.position.x += self.deslizamento_x
+        
+        
+        # Limite da tela    
         if self.position.x < self.rect.width // 2:
             self.position.x = self.rect.width //2
             
-        if self.position.x > LARGURA - self.rect.width // 2:
+        elif self.position.x > LARGURA - self.rect.width // 2:
             self.position.x = LARGURA - self.rect.width //2
             
         self.rect.center = self.position
         
 class Background:
     def __init__(self, speed):
-        self.image = pygame.image.load("background.png")
+        self.image = pygame.image.load("background1.png")
         self.image = pygame.transform.scale(self.image, (LARGURA, ALTURA))
         
         self.y1 = 0
@@ -85,13 +107,113 @@ class Background:
     def draw(self, surface):
         surface.blit(self.image, (0, self.y1))
         surface.blit(self.image, (0, self.y2))
+        
+class Backgroud2:
+    def __init__(self, speed):
+        self.image = pygame.image.load("background2.png")
+        self.image = pygame.transform.scale(self.image, (LARGURA, ALTURA))
+        
+        self.y1 = 0
+        self.y2 = -ALTURA
+        self.speed = speed
+        
+    def max_speed(self):
+        self.speed += 1 
+        
+        if self.speed > 20: #8
+            self.speed = 20 #8
+            
+    def min_speed(self):
+        self.speed -= 1 #0.5
+        
+        if self.speed <= 10: #0.5
+            self.speed = 10 #0.5
 
-class Tree(pygame.sprite.Sprite):
+    def update(self):
+        self.y1 += self.speed
+        self.y2 += self.speed
+        
+        Keys = pygame.key.get_pressed()
+        
+        if self.y1 >= ALTURA:
+            self.y1 = -ALTURA
+            
+        if self.y2 >= ALTURA:
+            self.y2 = -ALTURA
+            
+        if Keys [K_UP]:
+            self.max_speed()
+            
+        if Keys [K_DOWN]:
+            self.min_speed()
+
+    def draw(self, surface):
+        surface.blit(self.image, (0, self.y1))
+        surface.blit(self.image, (0, self.y2))
+
+class Avalanche: 
     def __init__(self):
-        super(Tree, self).__init__()
+        self.frames = [
+            pygame.image.load("avalanche.png").convert_alpha(),
+            pygame.image.load("avalanche1.png").convert_alpha()
+        ]
+        
+        self.frames = [pygame.transform.scale(f, (LARGURA, 400)) for f in self.frames]
+        
+        self.index = 0
+        self.timer = 0
+        self.delay = 5
+        
+        #self.y = -200
+        self.velocidade = 2
 
+    def update(self):
+        self.timer += 1
+        if self.timer >= self.delay:
+            self.timer = 0
+            self.index = (self.index + 1) % len(self.frames)  # Avança frame
+        
+    def draw(self, tela):
+        tela.blit(self.frames[self.index], (0, ALTURA - 400))
+
+class Flags(pygame.sprite.Sprite):
+    def __init__(self, x, y, background_speed):
+        super(Flags, self).__init__()
+        
+        self.image = pygame.image.load("bandeira.png")
+        self.image = pygame.transform.scale(self.image, (100, 100))
+        
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.speed = background_speed
+                
+    def max_speed(self):
+        self.speed += 1
+        
+        if self.speed > 15:
+            self.speed = 15
+            
+    def min_speed(self):
+        self.speed -= 1
+        
+        if self.speed <= 1:
+            self.speed = 1
+        
+    def update(self):
+        self.rect.y += self.speed           
+        Keys = pygame.key.get_pressed()
+            
+        if Keys [K_UP]:
+            self.max_speed()
+            
+        if Keys [K_DOWN]:
+            self.min_speed()
+        
+        if self.rect.top > 600:
+            self.kill()
+            
 class Menu():
-    fonte = pygame.font.SysFont("Arial", 40)
+    fonte = pygame.font.SysFont("Arial", 30)
 
     def desenhar_menu(texto, y, selecionado = False):
         cor = (100, 100, 100)
@@ -108,7 +230,7 @@ class Menu():
         pausado = True
 
         while pausado:
-            tela.fill((255, 255, 255))
+            #tela.fill((255, 255, 255))
 
             botao_inicio = Menu.desenhar_menu("Início", 200)
             botao_recomecar = Menu.desenhar_menu("Recomeçar", 280)
@@ -137,13 +259,20 @@ def main():
     clock = pygame.time.Clock()
     
     player = Player("Vovô")
-    
     background = Background(1)
+    background2 = Backgroud2(1)
+    avalanche = Avalanche()
     
+    flags_group = pygame.sprite.Group()
     grupo = pygame.sprite.Group()
     grupo.add(player)
     
+    contador_flags = 0
+    tempo_entre_flags= 60
+    
     while rodando:
+        contador_flags +=1
+        
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 rodando = False
@@ -160,18 +289,33 @@ def main():
 
                     elif acao == "sair":
                         rodando = False
+                        
+            # Flags sendo geradas            
+            if contador_flags >= tempo_entre_flags:
+                x = random.randint(100, 700)
+                nova_flag = Flags(x, -50, background.speed)
+                
+                flags_group.add(nova_flag)
+                contador_flags = 0
+            
+        else:
+            # Lógica do jogo aqui (movimentos, colisões, etc.)
+            background.update()
+            background2.update()
+            avalanche.update()
+            flags_group.update()
+            grupo.update()
 
-        # Lógica do jogo aqui (movimentos, colisões, etc.)
-        background.update()
-        grupo.update()
+            # Preenche a tela
+            background.draw(tela)
+            background2.draw(tela)
+            avalanche.draw(tela)
+            flags_group.draw(tela)
+            grupo.draw(tela)
 
-        # Preenche a tela
-        background.draw(tela)
-        grupo.draw(tela)
-
-        # Atualiza a tela
-        pygame.display.flip()
-        clock.tick(60)
+            # Atualiza a tela
+            pygame.display.flip()
+            clock.tick(60)
 
     # Encerra o pygame
     pygame.quit()
