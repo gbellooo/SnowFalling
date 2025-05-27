@@ -81,7 +81,7 @@ class Player(pygame.sprite.Sprite):
             
         self.rect.center = self.position
         
-class Background:
+class Background:   
     def __init__(self, speed):
         self.image = pygame.image.load("background1.png")
         self.image = pygame.transform.scale(self.image, (LARGURA, ALTURA))
@@ -196,12 +196,12 @@ class Avalanche:
     def draw(self, tela):
         tela.blit(self.frames[self.index], (0, ALTURA - 400))
 
-class Flags(pygame.sprite.Sprite):
+class Flags(pygame.sprite.Sprite):  
     def __init__(self, x, y, background_speed):
         super(Flags, self).__init__()
         
         self.image = pygame.image.load("bandeira.png")
-        self.image = pygame.transform.scale(self.image, (100, 100))
+        self.image = pygame.transform.scale(self.image, (80, 80))
         
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
@@ -229,7 +229,7 @@ class Flags(pygame.sprite.Sprite):
         if Keys [K_DOWN]:
             self.min_speed()
         
-        if self.rect.top > 600:
+        if self.rect.top > ALTURA:
             self.kill()
 
 class Pedra(pygame.sprite.Sprite):
@@ -244,6 +244,31 @@ class Pedra(pygame.sprite.Sprite):
 
         self.speed = background_speed
 
+    def update(self):
+        self.rect.y += self.speed
+        Keys = pygame.key.get_pressed()
+
+        if Keys[K_UP]:
+            self.speed = min(self.speed + 1, 15)
+
+        elif Keys[K_DOWN]:
+            self.speed = max(self.speed - 1, 15)
+
+        if self.rect.top > ALTURA:
+            self.kill()
+
+class Arvore(pygame.sprite.Sprite):
+    def __init__(self, x, y, background_speed):
+        super(Arvore, self).__init__()
+
+        self.image = pygame.image.load("arvore.png")
+        self.image = pygame.transform.scale(self.image, (150, 150))
+
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+        self.speed = background_speed
+        
     def update(self):
         self.rect.y += self.speed
         Keys = pygame.key.get_pressed()
@@ -401,10 +426,10 @@ def fase_1():
                         return fase_1()
                     
                     elif acao == "inicio":
-                        rodando = False
+                        return "menu"
 
                     elif acao == "sair":
-                        rodando = False
+                        return "sair"
 
         for flag in colisoes:
             if not player.impacto:
@@ -555,12 +580,19 @@ def fase_2():
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 rodando = False
-            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_ESCAPE:
-                acao = Menu.menu_pause()
-                if acao == "recomecar":
-                    return fase_2()
-                elif acao in ["inicio", "sair"]:
-                    rodando = False
+
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_ESCAPE:
+                    acao = Menu.menu_pause()
+
+                    if acao == "recomecar":
+                        return fase_1()
+                    
+                    elif acao == "inicio":
+                        return "menu"
+
+                    elif acao == "sair":
+                        return "sair"
 
         for flag in colisoes:
             if not player.impacto:
@@ -652,6 +684,166 @@ def fase_2():
 
     return "inicio"
 
+def fase_3():
+    rodando = True
+    clock = pygame.time.Clock()
+    
+    player = Player("Vovô")
+    background = Background(1)
+    avalanche = Avalanche()
+    
+    flags_group = pygame.sprite.Group()
+    pedras_group = pygame.sprite.Group()
+    arvore_group = pygame.sprite.Group()
+
+    grupo = pygame.sprite.Group()
+    grupo.add(player)
+    
+    contador_flags = 0
+    tempo_entre_flags= 60
+
+    tempo_fase = 30
+    inicio_tempo = pygame.time.get_ticks()
+    venceu = False
+
+    slow_motion = False
+    tempo_slow = 0
+    duracao_slow = 500
+
+    distancia_percorrida = 0
+    distancia_total = 20000
+    
+    while rodando:
+        contador_flags += 1
+
+        colisoes = pygame.sprite.spritecollide(player, flags_group, dokill=False)
+        colisoes_pedra = pygame.sprite.spritecollide(player, pedras_group, dokill=False)
+        colisoes_arvore = pygame.sprite.spritecollide(player, arvore_group, dokill=False)
+
+        tempo_decorrido = (pygame.time.get_ticks() - inicio_tempo) // 1000
+        tempo_restante = max(0, tempo_fase - tempo_decorrido)
+        
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                rodando = False
+
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_ESCAPE:
+                    acao = Menu.menu_pause()
+
+                    if acao == "recomecar":
+                        return fase_1()
+                    
+                    elif acao == "inicio":
+                        return "menu"
+
+                    elif acao == "sair":
+                        return "sair"
+
+        for flag in colisoes:
+            if not player.impacto:
+                player.position.y += 50
+                player.impacto = True
+                player.rect.center = player.position
+                tempo_slow = pygame.time.get_ticks()
+                slow_motion = True
+
+        for pedra in colisoes_pedra:
+            if not player.impacto:
+                player.position.y += 100  # impacto mais forte
+                player.impacto = True
+                player.rect.center = player.position
+                tempo_slow = pygame.time.get_ticks()
+                slow_motion = True
+
+        for arvore in colisoes_arvore:
+            if not player.impacto:
+                player.position.y += 100
+                player.rect.center = player.position
+                tempo_slow = pygame.time.get_ticks()
+                slow_motion = True
+
+        if slow_motion:
+            if pygame.time.get_ticks() - tempo_slow < duracao_slow:
+                background.speed = 1
+                for flag in flags_group: flag.speed = 1
+                for pedra in pedras_group: pedra.speed = 1
+                avalanche.velocidade = 1
+            else:
+                slow_motion = False
+                background.speed = 5
+                for flag in flags_group: flag.speed = 5
+                for pedra in pedras_group: pedra.speed = 5
+                avalanche.velocidade = 2
+                        
+        if contador_flags >= tempo_entre_flags:
+            x = random.randint(100, 700)
+            flags_group.add(Flags(x, -50, background.speed))
+
+            if random.randint(0, 100) < 40:
+                pedras_group.add(Pedra(random.randint(100, 700), -100, background.speed))
+
+            if random.randint(0, 100) < 30:
+                arvore_group.add(Arvore(random.randint(100, 700), - 150, background.speed))
+            contador_flags = 0
+
+        if distancia_percorrida >= distancia_total and not venceu:
+            venceu = True
+            fonte_vitoria = pygame.font.SysFont("Poppins", 60, bold=True)
+            texto_vitoria = fonte_vitoria.render("Você Venceu!", True, (0, 180, 0))
+            tela.blit(texto_vitoria, texto_vitoria.get_rect(center=(LARGURA // 2, ALTURA // 2)))
+            pygame.display.flip()
+            pygame.time.wait(3000)
+            return "inicio"
+
+        if tempo_restante == 0 and not venceu:
+            fonte_gameover = pygame.font.SysFont("Poppins", 60, bold=True)
+            texto_gameover = fonte_gameover.render("Você Perdeu!", True, (255, 0, 0))
+            tela.blit(texto_gameover, texto_gameover.get_rect(center=(LARGURA // 2, ALTURA // 2)))
+            pygame.display.flip()
+            pygame.time.wait(3000)
+            return "recomecar"
+            
+        else:
+            background.update()
+            distancia_percorrida += background.speed
+            avalanche.update()
+            flags_group.update()
+            pedras_group.update()
+            arvore_group.update()
+
+            grupo.update()
+
+            background.draw(tela)
+            avalanche.draw(tela)
+            flags_group.draw(tela)
+            pedras_group.draw(tela)
+            arvore_group.draw(tela)
+
+            grupo.draw(tela)
+
+            porcentagem = min(100, (distancia_percorrida / distancia_total) * 100)
+
+            fonte_tempo = pygame.font.SysFont("Poppins", 30)
+            tela.blit(fonte_tempo.render(f"Tempo: {tempo_restante}s", True, (255, 0, 0)), (10, 10))
+
+            fonte_distancia = pygame.font.SysFont("Poppins", 24)
+            tela.blit(fonte_distancia.render(f"Progresso: {porcentagem:.1f}%", True, (0, 0, 0)), (10, 40))
+
+            # Barra de progresso
+            barra_largura = 200
+            barra_altura = 20
+            barra_x = 10
+            barra_y = 70
+            progresso_largura = int((porcentagem / 100) * barra_largura)
+            pygame.draw.rect(tela, (180, 180, 180), (barra_x, barra_y, barra_largura, barra_altura))
+            pygame.draw.rect(tela, (0, 200, 0), (barra_x, barra_y, progresso_largura, barra_altura))
+
+            pygame.display.flip()
+            clock.tick(60)
+
+    return "inicio"
+
 def mostrar_fase(numero):
     tela.fill((240, 248, 255))
 
@@ -667,9 +859,23 @@ while True:
     menu_principal()
 
     resultado = fase_1()
+    if resultado == "sair":
+        break
+    if resultado == "menu":
+        continue
     if resultado == "inicio":
         mostrar_fase(2)
         resultado = fase_2()
 
-    if resultado != "inicio":
-        break 
+        if resultado == "sair":
+            break
+        if resultado == "menu":
+            continue
+        if resultado == "inicio":
+            mostrar_fase(3)
+            resultado = fase_3()
+
+            if resultado == "sair":
+                break
+            if resultado == "menu":
+                continue
