@@ -3,6 +3,9 @@ import random
 
 from pygame.locals import*
 
+# Projeto do Gabriel Bello Domingues, RA: 10416808
+# Sistemas de Informação - Jogos Digitais, Turma 04J
+
 # Inicializa o pygame
 pygame.init()
 pygame.mixer.init()
@@ -39,7 +42,7 @@ class Player(pygame.sprite.Sprite):
         self.image_direita = pygame.image.load("vovo - Copia.png")
         self.image_direita = pygame.transform.scale(self.image_direita, (100, 100))
 
-        self.image = self.image_esquerda  # imagem inicial
+        self.image = self.image_esquerda
 
         
         self.rect = self.image.get_rect()
@@ -139,53 +142,6 @@ class Background:
         surface.blit(self.image, (0, self.y1))
         surface.blit(self.image, (0, self.y2))
 
-"""
-     
-class Backgroud2:
-    def __init__(self, speed):
-        self.image = pygame.image.load("background2.png")
-        self.image = pygame.transform.scale(self.image, (LARGURA, ALTURA))
-        
-        self.y1 = 0
-        self.y2 = -ALTURA
-        self.speed = speed
-        
-    def max_speed(self):
-        self.speed += 1 
-        
-        if self.speed > 20: #8
-            self.speed = 20 #8
-            
-    def min_speed(self):
-        self.speed -= 1 #0.5
-        
-        if self.speed <= 10: #0.5
-            self.speed = 10 #0.5
-
-    def update(self):
-        self.y1 += self.speed
-        self.y2 += self.speed
-        
-        Keys = pygame.key.get_pressed()
-        
-        if self.y1 >= ALTURA:
-            self.y1 = -ALTURA
-            
-        if self.y2 >= ALTURA:
-            self.y2 = -ALTURA
-            
-        if Keys [K_UP]:
-            self.max_speed()
-            
-        if Keys [K_DOWN]:
-            self.min_speed()
-
-    def draw(self, surface):
-        surface.blit(self.image, (0, self.y1))
-        surface.blit(self.image, (0, self.y2))
-
-"""
-
 class Avalanche: 
     def __init__(self):
         self.frames = [
@@ -199,7 +155,6 @@ class Avalanche:
         self.timer = 0
         self.delay = 5
         
-        #self.y = -200
         self.velocidade = 2
 
     def update(self):
@@ -256,7 +211,7 @@ class Pedra(pygame.sprite.Sprite):
         super(Pedra, self).__init__()
 
         self.image = pygame.image.load("pedra.png")
-        self. image = pygame.transform.scale(self.image, (60, 60))
+        self. image = pygame.transform.scale(self.image, (65, 65))
 
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
@@ -281,7 +236,7 @@ class Arvore(pygame.sprite.Sprite):
         super(Arvore, self).__init__()
 
         self.image = pygame.image.load("arvore.png")
-        self. image = pygame.transform.scale(self.image, (150, 150))
+        self. image = pygame.transform.scale(self.image, (170, 170))
 
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
@@ -374,7 +329,7 @@ def menu_principal():
 
     rodando_menu = True
     fundo = pygame.Surface((LARGURA, ALTURA))
-    fundo.fill((240, 248, 255))  # fundo azul claro, tipo neve
+    fundo.fill((240, 248, 255))
 
     pygame.mixer.music.load(musica_game)
     pygame.mixer.music.set_volume(0.5)
@@ -418,7 +373,6 @@ def fase_1():
     
     player = Player("Vovô")
     background = Background(1)
-    #background2 = Backgroud2(1)
     avalanche = Avalanche()
     
     flags_group = pygame.sprite.Group()
@@ -426,18 +380,18 @@ def fase_1():
     grupo.add(player)
     
     contador_flags = 0
-    tempo_entre_flags= 60
+    tempo_entre_flags= 100
 
     tempo_restante = 30
     ultimo_tempo = pygame.time.get_ticks()
     tempo_expirado = False
 
     venceu = False
-    tempo_para_vencer = 15
+    #tempo_para_vencer = 15
 
     slow_motion = False
     tempo_slow = 0
-    duracao_slow = 500  # em milissegundos
+    duracao_slow = 500
 
     distancia_percorrida = 0
     distancia_total = 15000
@@ -459,7 +413,7 @@ def fase_1():
            
         for zona in zona_bonus:
             if zona.rect.colliderect(player.rect) and not zona.tempo_dado:
-                tempo_restante += 2     #Ganha 2 segundos quando passa entra as bandeiras
+                tempo_restante += 5     #Ganha X segundos quando passa entra as bandeiras
                 zona.tempo_dado = True
                 som_bonus.play()
         
@@ -516,7 +470,6 @@ def fase_1():
 
             flags_group.add(flag_esquerda, flag_direita)
 
-            # Cria zona entre elas
             x_meio = (x1 + x2) // 2
             zona = ZonaBonus(x_meio, -30)
             zona.speed = background.speed
@@ -565,7 +518,6 @@ def fase_1():
 
             distancia_percorrida += background.speed
 
-            #background2.update()
             avalanche.update()
             flags_group.update()
             zona_bonus.update()
@@ -573,7 +525,6 @@ def fase_1():
 
             # Preenche a tela
             background.draw(tela)
-            #background2.draw(tela)
             avalanche.draw(tela)
             flags_group.draw(tela)
             zona_bonus.draw(tela)
@@ -604,9 +555,6 @@ def fase_1():
             pygame.display.flip()
             clock.tick(60)
 
-    # Encerra o pygame
-    #pygame.quit()
-
     return "inicio"
 
 def fase_2():
@@ -623,7 +571,10 @@ def fase_2():
     grupo.add(player)
     
     contador_flags = 0
-    tempo_entre_flags= 60
+    tempo_entre_flags= 200
+
+    contador_pedras = 0
+    tempo_entre_pedras = 60
 
     tempo_restante = 30
     ultimo_tempo = pygame.time.get_ticks()
@@ -635,6 +586,8 @@ def fase_2():
 
     distancia_percorrida = 0
     distancia_total = 20000
+
+    zona_bonus = pygame.sprite.Group()
     
     while rodando:
         contador_flags += 1
@@ -679,7 +632,7 @@ def fase_2():
 
         for pedra in colisoes_pedra:
             if not player.impacto:
-                player.position.y += 100  # impacto mais forte
+                player.position.y += 100 
                 player.impacto = True
                 player.rect.center = player.position
                 tempo_slow = pygame.time.get_ticks()
@@ -699,12 +652,28 @@ def fase_2():
                 avalanche.velocidade = 2
                         
         if contador_flags >= tempo_entre_flags:
-            x = random.randint(100, 700)
-            cor = "azul" if random.random() < 0.5 else "vermelha"
-            flags_group.add(Flags(x, -50, background.speed, cor))
+            x1 = random.randint(100, 300)
+            x2 = random.randint(500, 700)
 
-            if random.randint(0, 100) < 40:
-                pedras_group.add(Pedra(random.randint(100, 700), -100, background.speed))
+            flag_esquerda = Flags(x1, -50, background.speed, "vermelha")
+            flag_direita = Flags(x2, -50, background.speed, "azul")
+
+            flags_group.add(flag_esquerda, flag_direita)
+
+            x_meio = (x1 + x2) // 2
+            zona = ZonaBonus(x_meio, -30)
+            zona.speed = background.speed
+            zona_bonus.add(zona)
+
+            for _ in range(random.randint(1, 3)):
+                tentativa = 0
+                while tentativa < 10:
+                    pedra_x = random.randint(100, 700)
+                    if abs(pedra_x - x1) > 150 and abs(pedra_x - x2) > 150:
+                        pedras_group.add(Pedra(pedra_x, -100, background.speed))
+                        break
+                    tentativa += 1
+
             contador_flags = 0
 
         if distancia_percorrida >= distancia_total and not venceu:
@@ -733,7 +702,20 @@ def fase_2():
             pygame.mixer.music.play(-1)
 
             return "recomecar"
-            
+        
+        for zona in zona_bonus:
+            if zona.rect.colliderect(player.rect) and not zona.tempo_dado:
+                tempo_restante += 5
+                zona.tempo_dado = True
+                som_bonus.play()
+
+        contador_pedras += 1
+        if contador_pedras >= tempo_entre_pedras:
+            for _ in range(random.randint(2, 5)):
+                pedra_x = random.randint(100, 700)
+                pedras_group.add(Pedra(pedra_x, -100, background.speed))
+            contador_pedras = 0
+
         else:
             background.update()
             distancia_percorrida += background.speed
@@ -741,14 +723,15 @@ def fase_2():
             flags_group.update()
             pedras_group.update()
             grupo.update()
+            zona_bonus.update()
 
             background.draw(tela)
             avalanche.draw(tela)
             flags_group.draw(tela)
             pedras_group.draw(tela)
             grupo.draw(tela)
+            zona_bonus.draw(tela)
 
-            # HUD
             porcentagem = min(100, (distancia_percorrida / distancia_total) * 100)
 
             fonte_tempo = pygame.font.SysFont("Poppins", 30)
@@ -787,7 +770,13 @@ def fase_3():
     grupo.add(player)
     
     contador_flags = 0
-    tempo_entre_flags= 60
+    tempo_entre_flags= 300
+
+    contador_pedras = 0 
+    tempo_entre_pedras = 60
+
+    contador_arvores = 0
+    tempo_entre_arvores = 60
 
     tempo_fase = 30
     inicio_tempo = pygame.time.get_ticks()
@@ -799,6 +788,8 @@ def fase_3():
 
     distancia_percorrida = 0
     distancia_total = 20000
+
+    zona_bonus = pygame.sprite.Group()
     
     while rodando:
         contador_flags += 1
@@ -840,7 +831,7 @@ def fase_3():
 
         for pedra in colisoes_pedra:
             if not player.impacto:
-                player.position.y += 100  # impacto mais forte
+                player.position.y += 100
                 player.impacto = True
                 player.rect.center = player.position
                 tempo_slow = pygame.time.get_ticks()
@@ -848,7 +839,7 @@ def fase_3():
 
         for arvore in colisoes_pedra:
             if not player.impacto:
-                player.position.y += 100  # impacto mais forte
+                player.position.y += 100
                 player.impacto = True
                 player.rect.center = player.position
                 tempo_slow = pygame.time.get_ticks()
@@ -870,14 +861,19 @@ def fase_3():
                 avalanche.velocidade = 2
                         
         if contador_flags >= tempo_entre_flags:
-            x = random.randint(100, 700)
-            flags_group.add(Flags(x, -50, background.speed))
+            x1 = random.randint(100, 300)
+            x2 = random.randint(500, 700)
 
-            if random.randint(0, 100) < 40:
-                pedras_group.add(Pedra(random.randint(100, 700), -100, background.speed))
+            flag_esquerda = Flags(x1, -50, background.speed, "vermelha")
+            flag_direita = Flags(x2, -50, background.speed, "azul")
 
-            if random.randint(0, 100) < 30:
-                arvore_group.add(Arvore(random.randint(100, 700), - 150, background.speed))
+            flags_group.add(flag_esquerda, flag_direita)
+
+            x_meio = (x1 + x2) // 2
+            zona = ZonaBonus(x_meio, -30)
+            zona.speed = background.speed
+            zona_bonus.add(zona)
+
             contador_flags = 0
 
         if distancia_percorrida >= distancia_total and not venceu:
@@ -906,7 +902,27 @@ def fase_3():
             pygame.mixer.music.play(-1)
 
             return "recomecar"
-            
+        
+        for zona in zona_bonus:
+            if zona.rect.colliderect(player.rect) and not zona.tempo_dado:
+                tempo_fase += 5
+                zona.tempo_dado = True
+                som_bonus.play()
+
+        contador_pedras += 1
+        if contador_pedras >= tempo_entre_pedras:
+            for _ in range(random.randint(2, 4)):
+                pedra_x = random.randint(100, 700)
+                pedras_group.add(Pedra(pedra_x, -100, background.speed))
+            contador_pedras = 0
+
+        contador_arvores += 1
+        if contador_arvores >= tempo_entre_arvores:
+            for _ in range(random.randint(1, 3)):
+                arvore_x = random.randint(100, 700)
+                arvore_group.add(Arvore(arvore_x, -150, background.speed))
+            contador_arvores = 0
+ 
         else:
             background.update()
             distancia_percorrida += background.speed
@@ -914,6 +930,7 @@ def fase_3():
             flags_group.update()
             pedras_group.update()
             arvore_group.update()
+            zona_bonus.update()
 
             grupo.update()
 
@@ -922,6 +939,7 @@ def fase_3():
             flags_group.draw(tela)
             pedras_group.draw(tela)
             arvore_group.draw(tela)
+            zona_bonus.draw(tela)
 
             grupo.draw(tela)
 
